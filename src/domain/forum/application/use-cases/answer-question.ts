@@ -3,14 +3,17 @@ import { Answer } from '@/domain/forum/enterprise/entities/answer'
 
 import { AnswersRepository } from '../repositories/answers-repository'
 import { Either, success } from '@/core/either'
+import { AnswerAttachment } from '../../enterprise/entities/answer-attachment'
+import { AnswerAttachmentList } from '../../enterprise/entities/answer-attachment-list'
 
-interface AnswerQuestionUseCaseRequest {
+interface AnswerAnswerUseCaseRequest {
   instructorId: string
   questionId: string
+  attachmentsIds: string[]
   content: string
 }
 
-type AnswerQuestionUseCaseResponse = Either<
+type AnswerAnswerUseCaseResponse = Either<
   null,
   {
     answer: Answer
@@ -23,13 +26,23 @@ export class AnswerQuestionUseCase {
   async execute({
     instructorId,
     questionId,
+    attachmentsIds,
     content,
-  }: AnswerQuestionUseCaseRequest): Promise<AnswerQuestionUseCaseResponse> {
+  }: AnswerAnswerUseCaseRequest): Promise<AnswerAnswerUseCaseResponse> {
     const answer = Answer.create({
       content,
       authorId: new UniqueEntityID(instructorId),
       questionId: new UniqueEntityID(questionId),
     })
+
+    const answerAttachments = attachmentsIds.map((attachmentId) => {
+      return AnswerAttachment.create({
+        attachmentId: new UniqueEntityID(attachmentId),
+        answerId: answer.id,
+      })
+    })
+
+    answer.attachments = new AnswerAttachmentList(answerAttachments)
 
     await this.answersRepository.create(answer)
 
